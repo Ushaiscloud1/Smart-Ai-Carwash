@@ -7,3 +7,5 @@ from app.models.employee import Employee
 
 from app.models.shift import Shift
 
+
+from app.models.employee_shift_assignment import EmployeeShiftAssignment
