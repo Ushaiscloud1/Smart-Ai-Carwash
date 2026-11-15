@@ -6,6 +6,8 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi import HTTPException
 
+from app.services.employee_shift_assignment import get_shift_assignments
+
 from app.models.employee import Employee
 from app.schemas.employee_shift_assignment import (
     EmployeeShiftAssignmentCreate,
@@ -217,3 +219,29 @@ def test_duplicate_assignment_rejected_by_service():
 
     mock_db.add.assert_not_called()
     mock_db.commit.assert_not_called()
+
+
+def test_get_shift_assignments_filters_by_branch():
+    branch_id = uuid.uuid4()
+    mock_db = MagicMock()
+
+    mock_db.scalars.return_value.all.return_value = []
+
+    assignments = get_shift_assignments(
+        db=mock_db,
+        branch_id=branch_id,
+        limit=100,
+    )
+
+    assert assignments == []
+
+    mock_db.scalars.assert_called_once()
+
+    statement = mock_db.scalars.call_args.args[0]
+
+    compiled_sql = str(statement.compile())
+
+    assert "employees.branch_id" in compiled_sql
+    assert "employee_shift_assignments" in compiled_sql
+
+    assert branch_id in statement.compile().params.values()

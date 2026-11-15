@@ -91,3 +91,30 @@ def create_shift_assignment(
     db.refresh(new_assignment)
 
     return new_assignment
+
+def get_shift_assignments(
+    db: Session,
+    branch_id: uuid.UUID,
+    limit: int = 100,
+) -> list[EmployeeShiftAssignment]:
+    """
+    Retrieve employee shift assignments for a specific branch.
+    """
+
+    statement = (
+        select(EmployeeShiftAssignment)
+        .join(
+            Employee,
+            EmployeeShiftAssignment.employee_id == Employee.id,
+        )
+        .where(Employee.branch_id == branch_id)
+        .order_by(
+            EmployeeShiftAssignment.shift_date,
+            EmployeeShiftAssignment.created_at,
+        )
+        .limit(limit)
+    )
+
+    assignments = db.scalars(statement).all()
+
+    return list(assignments)

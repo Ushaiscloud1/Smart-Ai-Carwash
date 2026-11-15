@@ -9,3 +9,5 @@ from app.models.shift import Shift
 
 
 from app.models.employee_shift_assignment import EmployeeShiftAssignment
+
+from app.models.user import User
