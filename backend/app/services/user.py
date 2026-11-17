@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 from app.models.user import User
 from app.schemas.user import UserCreate
 
@@ -46,3 +46,63 @@ def create_user(db: Session, user_data: UserCreate) -> User:
     db.refresh(new_user)
 
     return new_user
+
+
+def authenticate_user(
+    db: Session,
+    email: str,
+    password: str,
+) -> User:
+    """Authenticate a user using email and password."""
+
+    normalized_email = email.strip().lower()
+
+    user = db.scalar(
+        select(User).where(User.email == normalized_email)
+    )
+
+    # Use the same error for an unknown email or wrong password.
+    if user is None or not verify_password(
+        password,
+        user.hashed_password,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is inactive",
+        )
+
+    return user
+
+
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    status_code=status.HTTP_200_OK,
+)
+def login_user(
+    credentials: LoginRequest,
+    db: Session = Depends(get_db),
+):
+    """Authenticate a user and issue a JWT access token."""
+
+    user = authenticate_user(
+        db=db,
+        email=credentials.email,
+        password=credentials.password,
+    )
+
+    access_token = create_access_token(
+        user_id=str(user.id)
+    )
+
+    return TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+    )
