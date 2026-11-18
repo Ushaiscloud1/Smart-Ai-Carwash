@@ -11,6 +11,9 @@ from app.core.security import create_access_token
 from app.schemas.auth import LoginRequest, TokenResponse
 from app.services.user import authenticate_user
 
+from app.core.dependencies import get_current_user
+from app.models.user import User
+
 
 
 router = APIRouter(
@@ -56,3 +59,14 @@ def login_user(
         access_token=access_token,
         token_type="bearer",
     )
+
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+)
+def get_my_profile(
+    current_user: User = Depends(get_current_user),
+):
+    """Return the currently authenticated user's profile."""
+    return current_user

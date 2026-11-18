@@ -1,4 +1,4 @@
-
+﻿
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -80,29 +80,3 @@ def authenticate_user(
 
     return user
 
-
-@router.post(
-    "/login",
-    response_model=TokenResponse,
-    status_code=status.HTTP_200_OK,
-)
-def login_user(
-    credentials: LoginRequest,
-    db: Session = Depends(get_db),
-):
-    """Authenticate a user and issue a JWT access token."""
-
-    user = authenticate_user(
-        db=db,
-        email=credentials.email,
-        password=credentials.password,
-    )
-
-    access_token = create_access_token(
-        user_id=str(user.id)
-    )
-
-    return TokenResponse(
-        access_token=access_token,
-        token_type="bearer",
-    )

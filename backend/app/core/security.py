@@ -6,6 +6,9 @@ from pathlib import Path
 import jwt
 from dotenv import load_dotenv
 from pwdlib import PasswordHash
+import uuid
+from fastapi import HTTPException, status
+
 
 # Load local environment configuration.
 # Production environments can supply JWT_SECRET_KEY directly.
@@ -57,3 +60,41 @@ def create_access_token(user_id: str) -> str:
         secret_key,
         algorithm=JWT_ALGORITHM,
     )
+
+
+def decode_access_token(token: str) -> uuid.UUID:
+    """Validate a JWT access token and return its user ID."""
+
+    credentials_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired authentication token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    secret_key = os.getenv("JWT_SECRET_KEY")
+
+    if not secret_key or len(secret_key) < 32:
+        raise RuntimeError(
+            "JWT_SECRET_KEY must be configured with a secure random key."
+        )
+
+    try:
+        payload = jwt.decode(
+            token,
+            secret_key,
+            algorithms=[JWT_ALGORITHM],
+            options={"require": ["sub", "iat", "exp", "type"]},
+        )
+
+        if payload.get("type") != "access":
+            raise credentials_error
+
+        user_id = payload.get("sub")
+
+        if not isinstance(user_id, str):
+            raise credentials_error
+
+        return uuid.UUID(user_id)
+
+    except (jwt.InvalidTokenError, ValueError, TypeError) as exc:
+        raise credentials_error from exc
