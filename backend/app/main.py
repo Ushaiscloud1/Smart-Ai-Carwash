@@ -6,6 +6,10 @@ from app.api.employee_shift_assignment import (
 )
 from app.api.auth import router as auth_router
 
+from app.api.organization_membership import (
+    router as organization_membership_router,
+)
+
 
 app = FastAPI(
     title="SmartWash AI API",
@@ -18,6 +22,9 @@ app.include_router(employee_shift_assignment_router)
 
 # Register Authentication API
 app.include_router(auth_router)
+
+# Register Organization Membership API
+app.include_router(organization_membership_router)
 
 
 @app.get("/")
@@ -34,3 +41,7 @@ def health_check():
         "status": "healthy",
         "service": "SmartWash AI Backend",
     }
+
+from app.api.organization_membership import (
+    router as organization_membership_router,
+)
