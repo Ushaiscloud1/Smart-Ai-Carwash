@@ -46,3 +46,46 @@ def verify_owner_access(
         "message": "Owner access granted",
     }
 
+
+@router.get("/{organization_id}/manager-access")
+def verify_manager_access(
+    organization_id: uuid.UUID,
+    membership: OrganizationMembership = Depends(
+        get_current_organization_membership
+    ),
+):
+    require_organization_role(
+        membership=membership,
+        allowed_roles={
+            OrganizationRole.OWNER,
+            OrganizationRole.MANAGER,
+        },
+    )
+
+    return {
+        "organization_id": str(organization_id),
+        "role": membership.role,
+        "message": "Manager-level access granted",
+    }
+
+@router.get("/{organization_id}/staff-access")
+def verify_staff_access(
+    organization_id: uuid.UUID,
+    membership: OrganizationMembership = Depends(
+        get_current_organization_membership
+    ),
+):
+    require_organization_role(
+        membership=membership,
+        allowed_roles={
+            OrganizationRole.OWNER,
+            OrganizationRole.MANAGER,
+            OrganizationRole.STAFF,
+        },
+    )
+
+    return {
+        "organization_id": str(organization_id),
+        "role": membership.role,
+        "message": "Staff-level access granted",
+    }
