@@ -16,4 +16,6 @@ from app.models.wash_service import WashService
 
 from app.models.wash_service_price import WashServicePrice
 
+from app.models.booking import Booking
+
 
